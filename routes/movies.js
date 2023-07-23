@@ -1,29 +1,12 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
-const isURL = require('validator/lib/isURL');
-
-const BadRequest = require('../errors/badRequest');
+const { validId, validUrl } = require('../utils/validation');
 
 const {
   getAllSavedMovies,
   createMovie,
   deleteMovie,
 } = require('../controllers/movies');
-
-const validUrl = (url) => {
-  const validate = isURL(url);
-  if (validate) {
-    return url;
-  }
-  throw new BadRequest('Некорректный адрес URL');
-};
-
-const validId = (id) => {
-  if (/^[0-9a-fA-F]{24}$/.test(id)) {
-    return id;
-  }
-  throw new BadRequest('Передан некорретный id.');
-};
 
 router.get('/', getAllSavedMovies);
 

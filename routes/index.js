@@ -1,24 +1,14 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 
-const isEmail = require('validator/lib/isEmail');
-const BadRequest = require('../errors/badRequest');
-
 const auth = require('../middlewares/auth');
 
 const userRoutes = require('./users');
 const movieRoutes = require('./movies');
 const notFoundRoute = require('./notFound');
 
+const { validEmail } = require('../utils/validation');
 const { createUser, login } = require('../controllers/users');
-
-const validEmail = (email) => {
-  const validate = isEmail(email);
-  if (validate) {
-    return email;
-  }
-  throw new BadRequest('Некорректный email');
-};
 
 router.post(
   '/signup',

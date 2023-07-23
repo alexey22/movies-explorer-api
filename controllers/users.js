@@ -3,8 +3,11 @@ const jsonWebToken = require('jsonwebtoken');
 const User = require('../models/user');
 const UnauthorizedError = require('../errors/unauthorizedError');
 const BadRequest = require('../errors/badRequest');
+const Conflict = require('../errors/conflict');
 const NotFound = require('../errors/notFound');
 const ServerError = require('../errors/serverError');
+
+const ErrorText = require('../errors/errorText');
 
 const createUser = (req, res, next) => {
   const { email, password, name } = req.body;
@@ -13,7 +16,7 @@ const createUser = (req, res, next) => {
   User.findOne({ email })
     .then((user) => {
       if (user) {
-        throw new BadRequest('Пользователь с таким email уже существует');
+        throw new Conflict(ErrorText.duplicateEmail);
       } else {
         bcrypt.hash(String(password), 10).then((hashedPassword) => {
           User.create({
@@ -24,13 +27,9 @@ const createUser = (req, res, next) => {
             .then((userFind) => res.status(201).send({ data: userFind }))
             .catch((err) => {
               if (err.name === 'ValidationError') {
-                next(
-                  new BadRequest(
-                    'Переданы некорректные данные при создании пользователя',
-                  ),
-                );
+                next(new BadRequest(ErrorText.invalidUserData));
               } else {
-                next(new ServerError('Произошла ошибка сервера'));
+                next(new ServerError(ErrorText.serverError));
               }
             });
         });
@@ -45,14 +44,14 @@ const getUser = (req, res, next) => {
     .then((user) => {
       if (user) res.status(200).send(user);
       else {
-        next(new BadRequest('Пользователь с данным id не найден'));
+        next(new BadRequest(ErrorText.userIdNotFound));
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequest('Некорректный id'));
+        next(new BadRequest(ErrorText.invalidId));
       } else {
-        next(new ServerError('Произошла ошибка сервера'));
+        next(new ServerError(ErrorText.serverError));
       }
     });
 };
@@ -69,18 +68,16 @@ const updateUser = (req, res, next) => {
       if (user) {
         res.status(200).send(user);
       } else {
-        next(new NotFound('Пользователь по указанному id не найден'));
+        next(new NotFound(ErrorText.userIdNotFound));
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(
-          new BadRequest(
-            'Переданы некорректные данные при обновлении пользователя',
-          ),
-        );
+        next(new BadRequest(ErrorText.invalidUserData));
+      } else if (err.codeName === 'DuplicateKey') {
+        next(new Conflict(ErrorText.duplicateEmail));
       } else {
-        next(new ServerError('Произошла ошибка сервера'));
+        next(new ServerError(ErrorText.serverError));
       }
     });
 };
@@ -93,9 +90,7 @@ const login = (req, res, next) => {
   User.findOne({ email })
     .select('+password')
     .orFail(() => {
-      next(
-        new UnauthorizedError('Пользователь с таким email и паролем не найден'),
-      );
+      next(new UnauthorizedError(ErrorText.userNotFoundWithEmailPassword));
     })
     .then((user) => {
       // Проверить совпадает ли пароль
@@ -119,7 +114,7 @@ const login = (req, res, next) => {
             // Если не совпадает -- вернуть ошибку
 
             throw new UnauthorizedError(
-              'Пользователь с таким email и паролем не найден',
+              ErrorText.userNotFoundWithEmailPassword,
             );
           }
         })

@@ -4,6 +4,8 @@ const NotFound = require('../errors/notFound');
 const ServerError = require('../errors/serverError');
 const Movie = require('../models/movie');
 
+const ErrorText = require('../errors/errorText');
+
 const getAllSavedMovies = (req, res, next) => {
   const owner = req.user._id;
   Movie.find({ owner })
@@ -11,7 +13,7 @@ const getAllSavedMovies = (req, res, next) => {
       res.status(200).send(movies);
     })
     .catch(() => {
-      next(new ServerError('Произошла ошибка сервера'));
+      next(new ServerError(ErrorText.ServerError));
     });
 };
 
@@ -29,11 +31,9 @@ const createMovie = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(
-          new BadRequest('Переданы некорректные данные при создании фильма'),
-        );
+        next(new BadRequest(ErrorText.invalidMovieData));
       } else {
-        next(new ServerError('Произошла ошибка сервера'));
+        next(new ServerError(ErrorText.ServerError));
       }
     });
 };
@@ -45,13 +45,9 @@ const deleteMovie = (req, res, next) => {
 
   Movie.findById(movieId).then((movie) => {
     if (!movie) {
-      next(new NotFound('Удаляемый фильм с таким id не найден'));
+      next(new NotFound(ErrorText.movieIdNotFound));
     } else if (!movie.owner.equals(userId)) {
-      next(
-        new Forbidden(
-          'Пользователь не может удалять фильмы других пользователей',
-        ),
-      );
+      next(new Forbidden(ErrorText.forbiddenMovieDeleteForUser));
     } else {
       Movie.deleteOne(movie) // , { new: true }
         .then((deletedMovie) => {
@@ -59,9 +55,9 @@ const deleteMovie = (req, res, next) => {
         })
         .catch((err) => {
           if (err.name === 'CastError') {
-            next(new BadRequest('Некорректный id фильма'));
+            next(new BadRequest(ErrorText.invalidId));
           } else {
-            next(new ServerError('Произошла ошибка сервера'));
+            next(new ServerError(ErrorText.ServerError));
           }
         });
     }

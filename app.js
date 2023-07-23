@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const helmet = require('helmet');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -7,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const { errors } = require('celebrate');
+const limiter = require('./middlewares/rate-limiter');
 const errorHandler = require('./middlewares/error');
 
 const { requestLogger, errorLogger } = require('./middlewares/logger');
@@ -20,15 +22,20 @@ if (NODE_ENV !== 'production') {
   process.env.JWT_SECRET = 'SUPER-SECRET-KEY';
   process.env.PORT = '3000';
   process.env.BASE_PATH = 'http://localhost:3000';
+  process.env.DATABASE_URL = 'mongodb://localhost:27017/bitfilmsdb';
 }
 
 const app = express();
 
+//app.use(helmet);
+
+app.use(limiter);
+
 app.use(
   cors({
     origin: [
-      'https://musli.nomoredomains.work',
-      'http://musli.nomoredomains.work',
+      'https://musli.nomoredomains.xyz',
+      'http://musli.nomoredomains.xyz',
       'https://localhost:3001',
       'http://localhost:3001',
       'https://localhost:3000',
@@ -45,7 +52,7 @@ app.use(cookieParser());
 
 const startServer = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/moviesdb', {
+    await mongoose.connect(process.env.DATABASE_URL, {
       useNewUrlParser: true,
       family: 4,
     });
