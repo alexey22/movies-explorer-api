@@ -13,6 +13,4 @@ const ErrorText = {
   authNeeded: 'Необходима авторизация',
 };
 
-module.exports = {
-  ErrorText,
-};
+module.exports = ErrorText;

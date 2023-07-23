@@ -27,7 +27,7 @@ if (NODE_ENV !== 'production') {
 
 const app = express();
 
-//app.use(helmet);
+app.use(helmet());
 
 app.use(limiter);
 
