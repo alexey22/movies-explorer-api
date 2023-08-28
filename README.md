@@ -4,8 +4,6 @@
 
 ## Ссылки на проект
 
-IP 158.160.77.1
-
 Frontend https://musli.nomoredomains.xyz
 
 Backend https://api.musli.nomoredomains.xyz
